@@ -6,8 +6,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include "url_utils.h"
-#include "word_utils.h"
+#include "url_utils.c"
+#include "word_utils.c"
+#include "general_function.c"
 
 typedef struct {
     char* url;
