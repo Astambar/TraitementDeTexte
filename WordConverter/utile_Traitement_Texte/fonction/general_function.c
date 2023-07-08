@@ -9,6 +9,18 @@ int countLengthText(const char* text)
     return length;
 }
 
+int isSeparator(char character, const char* separators)
+{
+    int i = 0;
+    while (separators[i] != '\0') {
+        if (character == separators[i]) {
+            return 1;
+        }
+        i++;
+    }
+    return 0;
+}
+
 void runExamples()
 {
     const char* text = "Voici un exemple de texte contenant une URL : https://www.example.com. toto https://chat.openai.com/c/6269c834-6230-4273-93ed-86994296e3ca";

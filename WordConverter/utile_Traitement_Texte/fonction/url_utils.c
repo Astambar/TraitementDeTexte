@@ -24,32 +24,58 @@ char* extract_partial_text(const char* text, int position)
     return partial_text;
 }
 
-URLInfo is_url_at_position(const char* text, int position)
+int is_url_start(const char* text, int position, regex_t* url_regex)
 {
-    char* url_pattern = "(https?|ftp)://[^[:space:]/$.?#].[^[:space:]]*";
-
-    regex_t url_regex = compile_regex(url_pattern);
-
     char* partial_text = extract_partial_text(text, position);
 
     regmatch_t match;
-    int reti = regexec(&url_regex, partial_text, 1, &match, 0);
+    int reti = regexec(url_regex, partial_text, 1, &match, 0);
+    if (!reti && match.rm_so == 0) {
+        free(partial_text);
+        return 1;
+    }
+
+    free(partial_text);
+    return 0;
+}
+
+URLInfo get_url_info(const char* text, int position, regex_t* url_regex)
+{
+    char* partial_text = extract_partial_text(text, position);
+
+    regmatch_t match;
+    int reti = regexec(url_regex, partial_text, 1, &match, 0);
     if (!reti && match.rm_so == 0) {
         int start = match.rm_so;
         int end = match.rm_eo;
         int length = end - start + 1;
         char* url = strndup(partial_text + start, length);
 
-        regfree(&url_regex);
         free(partial_text);
 
         URLInfo info = {url, position + end};
         return info;
     }
 
-    regfree(&url_regex);
     free(partial_text);
 
+    URLInfo info = {NULL, position};
+    return info;
+}
+
+URLInfo is_url_at_position(const char* text, int position)
+{
+    char* url_pattern = "(https?|ftp)://[^[:space:]/$.?#].[^[:space:]]*";
+
+    regex_t url_regex = compile_regex(url_pattern);
+
+    if (is_url_start(text, position, &url_regex)) {
+        URLInfo info = get_url_info(text, position, &url_regex);
+        regfree(&url_regex);
+        return info;
+    }
+
+    regfree(&url_regex);
     URLInfo info = {NULL, position};
     return info;
 }
@@ -58,22 +84,19 @@ int countUrl(const char* text)
 {
     int i = 0;
     int countUrl = 0;
-    char current_character;
+    int lengthText = countLengthText(text);
     URLInfo info;
 
-    while ((current_character = text[i]) != '\0') {
+    while (i <= lengthText) {
         info = is_url_at_position(text, i);
         if (info.url != NULL) {
             printf("URL Trouver à la position: %d\n", i);
             printf("Fin de l'URL à la position: %d\n", info.end_position);
             countUrl++;
             i = info.end_position;
-        } else {
-            i++;
-        }
-        if (info.url != NULL) {
             free(info.url);
         }
+        i++;
     }
     return countUrl;
 }
